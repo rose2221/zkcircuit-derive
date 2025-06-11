@@ -20,7 +20,41 @@ pub fn zkcircuit_derive(input: TokenStream) -> TokenStream {
         Ok(fields) => fields,
         Err(e) => return e.to_compile_error().into(),
     };
-    let gen = quote! {};
+      let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+
+    let allocations = field.iter().map(|f|{
+        let field_name = &f.name;
+        let field_name_str = field.name_to_string();
+        if f.is_input {
+            quote!{
+                let #field_name = cs.alloc_input(
+                    || #field_name_str,
+                    || self.#field_name.ok_or(bellman::Error::SynthesisError::AssignmentMissing)?
+                )
+            } 
+        }else {
+
+            quote! {
+                let #field_name = cs.alloc(
+                    || #field_name_str,
+                    || self.#field_name.ok_or(bellman::SynthesisError::AssignmentMissing)
+                )?;
+            }
+        }
+    });
+    let gen = quote! {
+        impl #impl_generics bellman::Circuit<F> for #struct_name #ty_generics #where_clause {
+            fn synthesis<CS: bellman::ConstraintSystem<F>>(
+                self, cs: &mut CS
+            ) -> Result<(), bellman::SynthesisError> {
+                // Allocate the fields
+                #(#allocations)*
+
+                // Return Ok if all allocations were successful
+                Ok(())
+            }
+        }
+    };
     gen.into()
 }
 
