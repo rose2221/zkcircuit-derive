@@ -9,6 +9,7 @@ use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields, Ident, Type,
 struct FieldInfo{
     name: Ident,
     ty: Type,
+    is_input: bool,
 }
 
 #[proc_macro_derive(zkcircuit, attributes(circuit))]
@@ -32,7 +33,18 @@ fn get_field_info(data: &Data) -> Result<Vec<FieldInfo>, syn::Error> {
         Ok(fields.named.iter().map(|f|{
             let name = f.ident.clone().unwrap();
             let ty = f.ty.clone();
-            FieldInfo { name, ty }
+
+            let mut is_input = false;
+            for attrs in &f.attrs {
+                if attr.path().is_ident("circuit"){
+                    let meta_list = attr.meta.require_list()?;
+                    if meta_list.tokens.to_string() == "input" {
+                        is_input = true;
+                    break;
+                    }
+                }
+            }
+            Ok(FieldInfo { name, ty, is_input })
         }).collect())
     } else {
         Err(syn::Error::new_spanned(data,  
