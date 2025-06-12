@@ -12,6 +12,23 @@ struct FieldInfo{
     is_input: bool,
 }
 
+fn get_inner_type(ty: &Type) -> &Type {
+    if let Type::Path(type_path) = ty {
+        if let Some(segment) = type_path.path.segments.last() {
+            if segment.ident() == "Option" {
+                if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
+                    if let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first() {
+                        if let Type::Path(inner_path) = inner_ty {
+                            return Some(&inner_path.path);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 #[proc_macro_derive(zkcircuit, attributes(circuit))]
 pub fn zkcircuit_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
@@ -21,6 +38,8 @@ pub fn zkcircuit_derive(input: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
     };
       let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+
+      let builder_name = format_ident!("{}Builder", struct_name);
 
     let allocations = field.iter().map(|f|{
         let field_name = &f.name;
