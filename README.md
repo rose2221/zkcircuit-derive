@@ -1,7 +1,7 @@
 # zkcircuit-derive: Boilerplate-Free ZK Circuits in Rust
 
-[![Crates.io](https://img.shields.io/crates/v/zkcircuit-derive.svg)](https://crates.io/crates/zkcircuit-derive)
-[![Build Status](https://img.shields.io/travis/your-username/zkcircuit-derive.svg)](https://travis-ci.org/your-username/zkcircuit-derive)
+<!-- [![Crates.io](https://img.shields.io/crates/v/zkcircuit-derive.svg)](https://crates.io/crates/zkcircuit-derive)
+[![Build Status](https://img.shields.io/travis/your-username/zkcircuit-derive.svg)](https://travis-ci.org/your-username/zkcircuit-derive) -->
 
 `zkcircuit-derive` is a procedural macro that automates the tedious and error-prone process of writing boilerplate for ZK-SNARK circuits using the `bellman` framework. Simply define the logic of your circuit in a plain Rust struct, and let the macro handle the rest.
 
