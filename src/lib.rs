@@ -4,8 +4,9 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields, Ident, Type,};
-
+use quote::format_ident;
+use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Field, Ident, Type, Path,};
+pub mod witness;
 struct FieldInfo{
     name: Ident,
     ty: Type,
@@ -41,9 +42,9 @@ pub fn zkcircuit_derive(input: TokenStream) -> TokenStream {
 
       let builder_name = format_ident!("{}Builder", struct_name);
 
-    let allocations = field.iter().map(|f|{
+    let allocations = fields.iter().map(|f|{
         let field_name = &f.name;
-        let field_name_str = field.name_to_string();
+        let field_name_str = fields.name_to_string();
         if f.is_input {
             quote!{
                 let #field_name = cs.alloc_input(
@@ -80,7 +81,7 @@ pub fn zkcircuit_derive(input: TokenStream) -> TokenStream {
         }
     });
 
-    let build_checks = fields.iter().maps(|f|{
+    let build_checks = fields.iter().map(|f|{
         let field_name = &f.name;
         let error_msg = format!("{} field is missing", field_name);
         quote! {
@@ -90,7 +91,7 @@ pub fn zkcircuit_derive(input: TokenStream) -> TokenStream {
         }
     });
 
-    let assignments = field.iter().map(|f| {
+    let assignments = fields.iter().map(|f| {
         let field_name = &f.name;
         quote! {
             #field_name : self.#field_name
@@ -135,7 +136,7 @@ pub fn zkcircuit_derive(input: TokenStream) -> TokenStream {
                 })
             }
         }
-        #(#builder_setters)*
+        #(#build_setters)*
         pub fn build(self) -> Result<#struct_name #ty_generics, &'static str>{
             #(#build_checks)*
             Ok(#struct_name {
@@ -158,8 +159,8 @@ fn get_field_info(data: &Data) -> Result<Vec<FieldInfo>, syn::Error> {
 
             let mut is_input = false;
             for attrs in &f.attrs {
-                if attr.path().is_ident("circuit"){
-                    let meta_list = attr.meta.require_list()?;
+                if attrs.path().is_ident("circuit"){
+                    let meta_list = attrs.meta.require_list()?;
                     if meta_list.tokens.to_string() == "input" {
                         is_input = true;
                     break;
@@ -174,3 +175,34 @@ fn get_field_info(data: &Data) -> Result<Vec<FieldInfo>, syn::Error> {
     }
 
 }
+// #[cfg(test)]
+// mod tests {
+
+//     use crate::witness::Witness;
+
+//     use bellman::{Circuit, ConstraintSystem, SynthesisError};
+//     use ff::Field;
+//     use bellman::groth16::create_random_proof;
+
+//     struct TestSysmte<F: Field>{
+//         _marker: std::marker::PhantomData<F>,
+//     }
+//     impl<F: Field> ConstraintSystem<F> for TestContraintSystem<F> {
+//         type Root = Self;
+//         fn alloc<F1, F2, F3>(&mut self, _: F1, _: F2 ) -> Result<bellman::Variable, SynthesisError> 
+//         where F1: FnOnce() -> String,
+//         F2: FnOnce() -> Result<F, SynthesisError>,{
+//             // Mock implementation
+//             Ok(bellman::Variable::new_unchecked(bellman::Indiex::Input(0)))
+//         }
+//         fn alloc_input<F1, F2, F3>(&mut self, _: F1, _: F2) -> Result<bellman::Variable, SynthesisError>
+//         where F1: FnOnce() -> String,
+//         F2: FnOnce() -> Refult<F, SynthesisError>,
+//         {
+//             Ok(bellman::Variable::new_unchecked(bellman::Index::Input(0)))
+
+//         }
+//         fn enforce<F1, F2, F3, F4>(&mut self, _: F1, _ :F2, _:F3, _:F4)
+
+//     }
+// }
