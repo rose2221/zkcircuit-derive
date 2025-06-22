@@ -1,0 +1,19 @@
+[package]
+name = "zkcircuit"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ff = "0.13.1"
+bellman = "0.14.0"
+rand = "0.8.0"
+
+# The `pairing` crate is for the generic Engine trait.
+pairing = "0.23.0"
+# The specific curve implementation comes from the `bls12_381` crate.
+bls12_381 = "0.8.0"
+
+[dev-dependencies]
+# Dependencies in this section are only for tests and examples.
+
+zkcircuit-derive = { path = "../zkcircuit-derive" }
